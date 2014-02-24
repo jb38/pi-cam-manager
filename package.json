@@ -1,0 +1,24 @@
+{
+  "name": "pi-cam-manager",
+  "version": "0.0.1",
+  "description": "Simple web-based PiCam management console using Node.js and Bootstrap",
+  "main": "server.js",
+  "dependencies": {
+    "express": "~3.4.8"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "test.js",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jb38/pi-cam-manager.git"
+  },
+  "author": "Jim Blaney",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/jb38/pi-cam-manager/issues"
+  },
+  "homepage": "https://github.com/jb38/pi-cam-manager"
+}
