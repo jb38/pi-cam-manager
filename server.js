@@ -19,6 +19,14 @@ var path = require('path');
 var app = express();
 app.set('port', argPort || process.env.PORT || 8080);
 
+var CAMERA_STATES = [
+  'FREE',
+  'BUSY_VIDEO',
+  'BUSY_IMAGE'
+];
+
+var CAMERA_STATE = CAMERA_STATES[0];
+
 app.use('camera.js', function(err, req, res, next) {
   
 });
