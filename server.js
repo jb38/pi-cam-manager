@@ -73,7 +73,7 @@ app.use('/take.picture', function(req, res) {
         if (!!error) {
           res.send(error);
         } else {
-          res.send('{ "files": [ "' + filename + '" ] }');
+          res.send('{ "files": [ "camera/' + filename + '" ] }');
         }
 
       });
