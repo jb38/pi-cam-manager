@@ -52,6 +52,7 @@ app.use('/take.picture', function(req, res) {
       files = [].concat(files || []);
 
       files.sort();
+      files.reverse();
 
       var fileStr = ('"camera/' + files.join('", "camera/') + '"').replace('""', '');
 
@@ -68,14 +69,13 @@ app.use('/take.picture', function(req, res) {
     var child = exec(
       '/opt/vc/bin/raspistill -t 500 -e png -o ' + output_file,
       function(error, stdout, stderr) {
-        
-        exec('/usr/bin/convert ' + output_file + ' -resize 133x ' + output_file.replace('.png', '_tn.png'));
 
         if (!!error) {
           res.send(error);
         } else {
           res.send('{ "files": [ "' + filename + '" ] }');
         }
+
       });
   }
 
