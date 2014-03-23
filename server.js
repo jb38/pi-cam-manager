@@ -1,40 +1,86 @@
+var IS_TEST = true;
+
 // parse the command line parameters
 var args = process.argv.splice(2);
-var argPort = 8080;
+var argPort = 80;
 args.forEach(function(arg) {
   var a = arg.split('=');
   var param = a[0];
   var val = a[1];
   switch(param){
-  case "-port" :
-    argPort = val;
-    break;
+    case "-port" :
+      argPort = val;
+      break;
   }
 });
 
 var express = require('express');
-var http = require('http');
-var path = require('path');
+var fs      = require('fs');
+var http    = require('http');
+var path    = require('path');
+var exec    = require('child_process').exec;
 
 var app = express();
-app.set('port', argPort || process.env.PORT || 8080);
+app.set('port', argPort || process.env.PORT || 80);
 
-var CAMERA_STATES = [
-  'FREE',
-  'BUSY_VIDEO',
-  'BUSY_IMAGE'
-];
+var CAMERA_OUTPUT_DIR = path.join(__dirname, './src/app/camera');
 
-var CAMERA_STATE = CAMERA_STATES[0];
+app.use('/components', express.static(path.join(__dirname, './bower_components')));
 
-app.use('/camera.js', function(req, res) {
-  res.send('{ "image": "images/internet-test-card_800.jpg" }');
+app.use('/get.items', function(req, res) {
+
+  fs.readdir(CAMERA_OUTPUT_DIR, function(err, files) {
+    
+    files = [].concat(files || []);
+
+    files.sort();
+
+    var fileStr = ('"camera/' + files.join('", "camera/') + '"').replace('""', '');
+
+    res.send('{ "files": [ ' + fileStr + ' ] }');
+
+  });
+
+});
+
+app.use('/take.picture', function(req, res) {
+  
+  if (IS_TEST) {
+    
+    fs.readdir(CAMERA_OUTPUT_DIR, function(err, files) {
+    
+      files = [].concat(files || []);
+
+      files.sort();
+
+      var fileStr = ('"camera/' + files.join('", "camera/') + '"').replace('""', '');
+
+      res.send('{ "files": [ ' + fileStr + ' ] }');
+
+    });
+  
+  } else {
+
+    var filename =  new Date().getTime() + '.png'; 
+
+    console.log("/opt/vc/bin/raspistill -t 500 -e png -o " + path.join(CAMERA_OUTPUT_DIR + filename));
+
+    var child = exec(
+      "/opt/vc/bin/raspistill -t 500 -o " + directory + filename,
+      function(error, stdout, stderr) {
+        if (!!error) {
+          res.send(error);
+        } else {
+          res.send('{ "files": [ "' + filename + '" ] }');
+        }
+      });
+  }
+
 });
 
 app.use('/', express.static(path.join(__dirname, './src/app')));
 
 app.use(function(req, res) {
-  console.error(err.stack);
   res.send(500, 'Something broke!');
 });
 
