@@ -81,7 +81,9 @@
 
         $.each([].concat(data.files || data || []), function(index, file) {
 
-          var n = $(e).prepend('<div id="pi_cam_item_' + itemIndex + '" class="pull-left"><a href="' + file + '" data-lightbox="pi-cam-image"><img src="' + file + '" class="thumbnail" /></a></div>');
+          var tn = file.replace('.png', '_tn.png');
+
+          var n = $(e).prepend('<div id="pi_cam_item_' + itemIndex + '" class="pull-left"><a href="' + file + '" data-lightbox="pi-cam-image"><img src="' + tn + '" class="thumbnail" /></a></div>');
 
           $('#pi_cam_item_' + itemIndex).hide().fadeIn(500);
 

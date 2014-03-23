@@ -23,7 +23,7 @@ var exec    = require('child_process').exec;
 var app = express();
 app.set('port', argPort || process.env.PORT || 80);
 
-var CAMERA_OUTPUT_DIR = path.join(__dirname, './src/app/camera');
+var CAMERA_OUTPUT_DIR = path.join(__dirname, './src/app/camera/');
 
 app.use('/components', express.static(path.join(__dirname, './bower_components')));
 
@@ -63,11 +63,14 @@ app.use('/take.picture', function(req, res) {
 
     var filename =  new Date().getTime() + '.png'; 
 
-    console.log("/opt/vc/bin/raspistill -t 500 -e png -o " + path.join(CAMERA_OUTPUT_DIR + filename));
+    var output_file = path.join(CAMERA_OUTPUT_DIR + filename);
 
     var child = exec(
-      "/opt/vc/bin/raspistill -t 500 -o " + directory + filename,
+      '/opt/vc/bin/raspistill -t 500 -e png -o ' + output_file,
       function(error, stdout, stderr) {
+        
+        exec('/usr/bin/convert ' + output_file + ' -resize 133x ' + output_file.replace('.png', '_tn.png'));
+
         if (!!error) {
           res.send(error);
         } else {
