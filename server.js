@@ -27,13 +27,13 @@ var CAMERA_STATES = [
 
 var CAMERA_STATE = CAMERA_STATES[0];
 
-app.use('camera.js', function(err, req, res, next) {
-  
+app.use('/camera.js', function(req, res) {
+  res.send('{ "image": "images/internet-test-card_800.jpg" }');
 });
 
 app.use('/', express.static(path.join(__dirname, './src/app')));
 
-app.use(function(err, req, res, next) {
+app.use(function(req, res) {
   console.error(err.stack);
   res.send(500, 'Something broke!');
 });
