@@ -19,30 +19,67 @@ var fs      = require('fs');
 var http    = require('http');
 var path    = require('path');
 var exec    = require('child_process').exec;
+var spawn   = require('child_process').spawn;
+
+var CAMERA_OUTPUT_DIR = path.join(__dirname, './src/app/camera/');
 
 var app = express();
 app.set('port', argPort || process.env.PORT || 80);
 
-var CAMERA_OUTPUT_DIR = path.join(__dirname, './src/app/camera/');
-
+// path for bower-installed components
 app.use('/components', express.static(path.join(__dirname, './bower_components')));
 
+/**
+ * List the previously captured contents
+ */
 app.use('/get.items', function(req, res) {
 
   fs.readdir(CAMERA_OUTPUT_DIR, function(err, files) {
     
     files = [].concat(files || []);
 
-    files.sort();
+    images = files.filter(function(file) { 
+      
+      return file.indexOf('.jpg') !== -1 && file.indexOf('_tn') === -1; 
+    
+    }).sort().map(function(file) {
 
-    var fileStr = ('"camera/' + files.join('", "camera/') + '"').replace('""', '');
+      return {
 
-    res.send('{ "files": [ ' + fileStr + ' ] }');
+        image: 'camera/' + file,
+        thumbnail: 'camera/' + file.replace('.jpg', '_tn.jpg') 
+
+      };
+
+    });
+
+    videos = files.filter(function(file) {
+
+      return file.indexOf('.mp4') !== -1;
+
+    }).sort().map(function(file) {
+
+      return {
+
+        video: 'camera/' + file
+
+      };
+
+    });
+
+    res.setHeader('Content-Type', 'application/json');
+    res.send(JSON.stringify({ 
+      images: images,
+      videos: videos
+    }));
 
   });
 
 });
 
+/**
+ * Take a picture
+ */
 app.use('/take.picture', function(req, res) {
   
   if (IS_TEST) {
@@ -51,32 +88,70 @@ app.use('/take.picture', function(req, res) {
     
       files = [].concat(files || []);
 
-      files.sort();
-      files.reverse();
+      images = files.filter(function(file) { 
+        
+        return file.indexOf('.jpg') !== -1 && file.indexOf('_tn') === -1; 
+      
+      }).sort().map(function(file) {
 
-      var fileStr = ('"camera/' + files.join('", "camera/') + '"').replace('""', '');
+        return {
 
-      res.send('{ "files": [ ' + fileStr + ' ] }');
+          image: 'camera/' + file,
+          thumbnail: 'camera/' + file.replace('.jpg', '_tn.jpg') 
+
+        };
+
+      });
+
+      res.setHeader('Content-Type', 'application/json');
+      res.send(JSON.stringify({ images: images.splice(images.length - 1, 1) }));
 
     });
   
   } else {
 
-    var filename =  new Date().getTime() + '.png'; 
+    var filename =  new Date().getTime() + '.jpg'; 
 
     var output_file = path.join(CAMERA_OUTPUT_DIR + filename);
 
     var child = exec(
-      '/opt/vc/bin/raspistill -t 500 -e png -o ' + output_file,
-      function(error, stdout, stderr) {
+      '/opt/vc/bin/raspistill -t 5 -e jpg -th 133:100:10 -o ' + output_file,
+      function() {
 
-        if (!!error) {
-          res.send(error);
-        } else {
-          res.send('{ "files": [ "camera/' + filename + '" ] }');
-        }
+        exec(
+          // TODO: verify the path to convert
+          '/usr/local/bin/convert ' + output_file + ' thumbnail:' + output_file.replace('.jpg', '_tn.jpg'),
+          function(error, stdout, stderr) {
+
+            res.setHeader('Content-Type', 'application/json');
+            res.send(JSON.stringify({ files: [
+              {
+                image: 'camera/' + output_file,
+                thumbnail: 'camera/' + output_file.replace('.jpg', '_tn.jpg')
+              }
+            ]}));
+
+          });
 
       });
+  }
+
+});
+
+app.use('take.video', function(req, res) {
+
+  if (IS_TEST) {
+
+  } else {
+
+    var filename =  new Date().getTime() + '.mp4'; 
+
+    var output_file = path.join(CAMERA_OUTPUT_DIR + filename);
+
+    spawn(
+      '/opt/vc/bin/raspivid -o - | tee ' + output_file
+    );
+
   }
 
 });

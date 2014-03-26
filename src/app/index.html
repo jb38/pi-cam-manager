@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="components/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="components/fontawesome/css/font-awesome.css" />
     <link rel="stylesheet" href="components/lightbox2/css/lightbox.css" />
+    <link rel="stylesheet" href="components/videojs/dist/video-js/video-js.css" />
     
     <style>
       html, body {
@@ -17,7 +18,7 @@
       }
       
       .container-fluid {
-        margin-top: 30px;
+        margin-top: 15px;
       }
 
       .loading-image {
@@ -31,15 +32,41 @@
         margin-top: 7px;
       }
 
-      #item-container {
-        margin-top: 30px;
-      }
-
       img.thumbnail {
         width: 133px;
         height: 100px;
         margin-right: 15px;
       }
+
+ @keyframes fa-blink {
+     0% { opacity: 1; }
+     25% { opacity: 0.25; }
+     50% { opacity: 0.5; }
+     75% { opacity: 0.75; }
+     100% { opacity: 0; }
+ }
+
+  @-webkit-keyframes fa-blink {
+     0% { opacity: 0; }
+     67% { opacity: 1; }
+     100% { opacity: 0; }
+ }
+
+.fa-blink {
+   -webkit-animation: fa-blink 1s linear infinite;
+   -moz-animation: fa-blink 1s linear infinite;
+   -ms-animation: fa-blink 1s linear infinite;
+   -o-animation: fa-blink 1s linear infinite;
+   animation: fa-blink 1s linear infinite;
+}
+
+.jumbotron {
+  padding: 48px;
+}
+
+.jumbotron button {
+  margin-right: 48px;
+}
 
     </style>
   </head>
@@ -49,10 +76,14 @@
 
     <div class="container-fluid">
       
-      <div class="col-xs-12 col-sm-12">
+      <div class="col-xs-12 col-sm-12 jumbotron">
 
         <button class="btn btn-primary" id="take-picture">
           <i class="fa fa-camera fa-5x"></i>
+        </button>
+
+        <button class="btn btn-primary" disabled id="take-video">
+          <i class="fa fa-video-camera fa-5x"></i>
         </button>
 
       </div>
@@ -70,43 +101,11 @@
     <script src="components/jquery/dist/jquery.min.js"></script>
     <script src="components/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="components/lightbox2/js/lightbox.js"></script>
-
+    <script src="components/videojs/dist/video-js/video.js"></script>
+    <script src="js/pi-cam.js"></script>
     <script>
 
-      var itemIndex = 0;
-
-      var addItemsToContainer = function(data) {
-
-        var e = $('#item-container');
-
-        $.each([].concat(data.files || data || []), function(index, file) {
-
-          var n = $(e).prepend('<div id="pi_cam_item_' + itemIndex + '" class="pull-left"><a href="' + file + '" data-lightbox="pi-cam-image"><img src="' + file + '" class="thumbnail" /></a></div>');
-
-          $('#pi_cam_item_' + itemIndex).hide().fadeIn(500);
-
-          itemIndex++;
-
-        });
-
-      };
-
-      $(function() {
-
-        // get all the existing items
-        $.ajax('get.items', {
-          dataType: 'json'
-        }).done(addItemsToContainer);
-
-        $('#take-picture').on('click', function() {
-
-          $.ajax('take.picture', {
-            dataType: 'json'
-          }).done(addItemsToContainer);
-
-        })
-
-      });
+      
 
     </script>
   </body>
