@@ -1,4 +1,4 @@
-var IS_TEST = true;
+var IS_TEST = false;
 
 // parse the command line parameters
 var args = process.argv.splice(2);
@@ -116,23 +116,20 @@ app.use('/take.picture', function(req, res) {
     var output_file = path.join(CAMERA_OUTPUT_DIR + filename);
 
     var child = exec(
-      '/opt/vc/bin/raspistill -t 5 -e jpg -th 133:100:10 -o ' + output_file,
+      '/opt/vc/bin/raspistill -t 50 -e jpg -th 133:100:10 -o ' + output_file,
       function() {
+        exec('/usr/bin/convert ' + output_file + ' thumbnail:' + output_file.replace('.jpg', '_tn.jpg'));
 
-        exec(
-          // TODO: verify the path to convert
-          '/usr/local/bin/convert ' + output_file + ' thumbnail:' + output_file.replace('.jpg', '_tn.jpg'),
-          function(error, stdout, stderr) {
 
             res.setHeader('Content-Type', 'application/json');
             res.send(JSON.stringify({ images: [
               {
                 image: 'camera/' + filename,
-                thumbnail: 'camera/' + filename.replace('.jpg', '_tn.jpg')
+                thumbnail: 'camera/' + filename
               }
             ]}));
 
-          });
+//          });
 
       });
   }
