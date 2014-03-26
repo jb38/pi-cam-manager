@@ -20,6 +20,7 @@ var http    = require('http');
 var path    = require('path');
 var exec    = require('child_process').exec;
 var spawn   = require('child_process').spawn;
+var tee     = require('tee');
 
 var CAMERA_OUTPUT_DIR = path.join(__dirname, './src/app/camera/');
 
@@ -124,10 +125,10 @@ app.use('/take.picture', function(req, res) {
           function(error, stdout, stderr) {
 
             res.setHeader('Content-Type', 'application/json');
-            res.send(JSON.stringify({ files: [
+            res.send(JSON.stringify({ images: [
               {
-                image: 'camera/' + output_file,
-                thumbnail: 'camera/' + output_file.replace('.jpg', '_tn.jpg')
+                image: 'camera/' + filename,
+                thumbnail: 'camera/' + filename.replace('.jpg', '_tn.jpg')
               }
             ]}));
 
@@ -138,9 +139,11 @@ app.use('/take.picture', function(req, res) {
 
 });
 
-app.use('take.video', function(req, res) {
+app.use('/take.video', function(req, res) {
 
   if (IS_TEST) {
+
+    res.send(JSON.stringify({ foo: 'bar' }));
 
   } else {
 
