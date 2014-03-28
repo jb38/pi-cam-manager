@@ -1,5 +1,3 @@
-var IS_TEST = true;
-
 // parse the command line parameters
 var args = process.argv.splice(2);
 var argPort = 80;
@@ -83,50 +81,47 @@ app.use('/get.items', function(req, res) {
  */
 app.use('/take.picture', function(req, res) {
   
-  if (IS_TEST) {
-    
-    fs.readdir(CAMERA_OUTPUT_DIR, function(err, files) {
-    
-      files = [].concat(files || []);
+  var filename =  new Date().getTime() + '.jpg'; 
 
-      images = files.filter(function(file) { 
-        
-        return file.indexOf('.jpg') !== -1 && file.indexOf('_tn') === -1; 
+  var output_file = path.join(CAMERA_OUTPUT_DIR + filename);
+
+  var child = exec(
+    '/opt/vc/bin/raspistill -t 50 -e jpg -th 133:100:10 -o ' + output_file,
+    function() {
+      exec('/usr/bin/convert ' + output_file + ' thumbnail:' + output_file.replace('.jpg', '_tn.jpg'));
+
+          res.setHeader('Content-Type', 'application/json');
+          res.send(JSON.stringify({ image: 'camera/' + filename }));
+
+    }, function() {
+
+      fs.readdir(CAMERA_OUTPUT_DIR, function(err, files) {
       
-      }).sort().map(function(file) {
+        files = [].concat(files || []);
 
-        return {
+        images = files.filter(function(file) { 
+          
+          return file.indexOf('.jpg') !== -1 && file.indexOf('_tn') === -1; 
+        
+        }).sort().map(function(file) {
 
-          image: 'camera/' + file,
-          thumbnail: 'camera/' + file.replace('.jpg', '_tn.jpg') 
+          return {
 
-        };
+            image: 'camera/' + file,
+            thumbnail: 'camera/' + file.replace('.jpg', '_tn.jpg') 
+
+          };
+
+        });
+
+        setTimeout(function() {
+          res.setHeader('Content-Type', 'application/json');
+          res.send(JSON.stringify({ image: images.splice(images.length - 1, 1)[0].image }));
+        }, 1000);
 
       });
-
-      setTimeout(function() {
-        res.setHeader('Content-Type', 'application/json');
-        res.send(JSON.stringify({ image: images.splice(images.length - 1, 1)[0].image }));
-      }, 1000);
 
     });
-  
-  } else {
-
-    var filename =  new Date().getTime() + '.jpg'; 
-
-    var output_file = path.join(CAMERA_OUTPUT_DIR + filename);
-
-    var child = exec(
-      '/opt/vc/bin/raspistill -t 50 -e jpg -th 133:100:10 -o ' + output_file,
-      function() {
-        exec('/usr/bin/convert ' + output_file + ' thumbnail:' + output_file.replace('.jpg', '_tn.jpg'));
-
-            res.setHeader('Content-Type', 'application/json');
-            res.send(JSON.stringify({ image: 'camera/' + filename }));
-
-      });
-  }
 
 });
 
@@ -148,7 +143,9 @@ app.use('/take.video', function(req, res) {
     res.setHeader('Content-Type', 'video/mp4');
 
     video_process = spawn(
-      '/opt/vc/bin/raspivid -o - | tee ' + video_file
+      '/opt/vc/bin/raspivid -o - | /usr/bin/tee ' + video_file,
+      [],
+      { stdio: 'inherit' }
     );
     video_process.stdout.on('data', function (data) {
       res.send(data);
