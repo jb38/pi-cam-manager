@@ -137,12 +137,13 @@ app.use('/take.video', function(req, res) {
   res.setHeader('Content-Type', 'video/mp4');
 
   video_process = spawn(
-    '/opt/vc/bin/raspivid -o - | /usr/bin/tee ' + video_file,
-    [],
+    '/opt/vc/bin/raspivid',
+    [ '-o', '-', '|', '/usr/bin/tee', video_file],
     { stdio: 'inherit' }
   );
   video_process.stdout.on('data', function (data) {
-    res.send(data);
+console.log('data');
+    res.send(new Buffer(data));
   });
 
 });
