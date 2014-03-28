@@ -1,4 +1,4 @@
-var IS_TEST = false;
+var IS_TEST = true;
 
 // parse the command line parameters
 var args = process.argv.splice(2);
@@ -104,8 +104,10 @@ app.use('/take.picture', function(req, res) {
 
       });
 
-      res.setHeader('Content-Type', 'application/json');
-      res.send(JSON.stringify({ images: images.splice(images.length - 1, 1) }));
+      setTimeout(function() {
+        res.setHeader('Content-Type', 'application/json');
+        res.send(JSON.stringify({ image: images.splice(images.length - 1, 1)[0].image }));
+      }, 1000);
 
     });
   
@@ -120,21 +122,16 @@ app.use('/take.picture', function(req, res) {
       function() {
         exec('/usr/bin/convert ' + output_file + ' thumbnail:' + output_file.replace('.jpg', '_tn.jpg'));
 
-
             res.setHeader('Content-Type', 'application/json');
-            res.send(JSON.stringify({ images: [
-              {
-                image: 'camera/' + filename,
-                thumbnail: 'camera/' + filename
-              }
-            ]}));
-
-//          });
+            res.send(JSON.stringify({ image: 'camera/' + filename }));
 
       });
   }
 
 });
+
+var video_process = null;
+var video_file = null;
 
 app.use('/take.video', function(req, res) {
 
@@ -146,13 +143,30 @@ app.use('/take.video', function(req, res) {
 
     var filename =  new Date().getTime() + '.mp4'; 
 
-    var output_file = path.join(CAMERA_OUTPUT_DIR + filename);
+    video_file = path.join(CAMERA_OUTPUT_DIR + filename);
 
-    spawn(
-      '/opt/vc/bin/raspivid -o - | tee ' + output_file
+    res.setHeader('Content-Type', 'video/mp4');
+
+    video_process = spawn(
+      '/opt/vc/bin/raspivid -o - | tee ' + video_file
     );
+    video_process.stdout.on('data', function (data) {
+      res.send(data);
+    });
 
   }
+
+});
+
+app.use('/stop.video', function(req, res) {
+
+  video_process.kill();
+  video_process = null;
+
+  res.setHeader('Content-Type', 'application/json');
+  res.send(JSON.stringify({ video: video_file.replace(CAMERA_OUTPUT_DIR, 'camera/') }));  
+
+  video_file = null;
 
 });
 

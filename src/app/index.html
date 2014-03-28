@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>PiCam Control</title>
+    <title>Pi Cam Control</title>
     <link rel="stylesheet" href="components/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="components/fontawesome/css/font-awesome.css" />
     <link rel="stylesheet" href="components/lightbox2/css/lightbox.css" />
@@ -16,97 +16,244 @@
         padding: 0px;
         font-family: 'Open Sans', Helvetica, Arial;
       }
-      
+
       .container-fluid {
-        margin-top: 15px;
+        margin-top: 30px;
       }
 
-      .loading-image {
-        height: 102%;
-        filter: blur(4px);
-        -webkit-filter: blur(4px);
-        margin: -1% 0;
+      .preview {
+        display: inline-block;
+        width: 400px;
+        height: 300px;
+        margin: 20px 0;
       }
 
-      .btn .fa {
-        margin-top: 7px;
+      .btn {
+        width: 140px;
+        height: 140px;
+        padding: 15px;
       }
 
-      img.thumbnail {
-        width: 133px;
-        height: 100px;
-        margin-right: 15px;
+      .btn ~ .btn {
+        margin-left: 20px;
       }
 
- @keyframes fa-blink {
-     0% { opacity: 1; }
-     25% { opacity: 0.25; }
-     50% { opacity: 0.5; }
-     75% { opacity: 0.75; }
-     100% { opacity: 0; }
- }
+      .preview-content,
+      .preview-content>* {
+        width: 100%;
+        height: 100%;
+        /*background-color: #eee;*/
+      }
 
-  @-webkit-keyframes fa-blink {
-     0% { opacity: 0; }
-     67% { opacity: 1; }
-     100% { opacity: 0; }
- }
+      .btn-pi,
+      .btn-pi:hover,
+      .btn-pi:active,
+      .btn-pi:focus {
+        transition: opacity 250ms, background-color 250ms;
+        -webkit-transition: opacity 250ms, background-color 250ms;
+        color: #ffffff;
+        border-radius: 50%;
+        outline: none;
+      }
 
-.fa-blink {
-   -webkit-animation: fa-blink 1s linear infinite;
-   -moz-animation: fa-blink 1s linear infinite;
-   -ms-animation: fa-blink 1s linear infinite;
-   -o-animation: fa-blink 1s linear infinite;
-   animation: fa-blink 1s linear infinite;
-}
+      .btn-pi-green {
+        background-color: #75A928;
+      }
 
-.jumbotron {
-  padding: 48px;
-}
+      .btn-pi-green:hover {
+        background-color: #5C900F;
+      }
 
-.jumbotron button {
-  margin-right: 48px;
-}
+      .btn-pi-red {
+        background-color: #BC1142;
+      }
 
+      .btn-pi-red:hover {
+        background-color: #A30029;
+      }
+
+      @keyframes pulsate {
+          0% { opacity: 1; }
+         10% { opacity: 0.95106; }
+         20% { opacity: 0.80902; }
+         30% { opacity: 0.58779; }
+         40% { opacity: 0.30902; }
+         50% { opacity: 0; }
+         60% { opacity: 0.30902; }
+         70% { opacity: 0.58779; }
+         80% { opacity: 0.80902; }
+         90% { opacity: 0.95106; }
+        100% { opacity: 1; }
+      }
+
+      @-webkit-keyframes pulsate {
+          0% { opacity: 1; }
+         10% { opacity: 0.95106; }
+         20% { opacity: 0.80902; }
+         30% { opacity: 0.58779; }
+         40% { opacity: 0.30902; }
+         50% { opacity: 0; }
+         60% { opacity: 0.30902; }
+         70% { opacity: 0.58779; }
+         80% { opacity: 0.80902; }
+         90% { opacity: 0.95106; }
+        100% { opacity: 1; }
+      }
+
+      .fa-stop {
+        animation: pulsate 1.5s linear infinite;
+        -webkit-animation: pulsate 1.5s linear infinite;
+
+      }
     </style>
   </head>
   <body>
 
-    <div class="clearfix"></div>
-
     <div class="container-fluid">
-      
-      <div class="col-xs-12 col-sm-12 jumbotron">
-
-        <button class="btn btn-primary" id="take-picture">
-          <i class="fa fa-camera fa-5x"></i>
-        </button>
-
-        <button class="btn btn-primary" disabled id="take-video">
-          <i class="fa fa-video-camera fa-5x"></i>
-        </button>
-
+      <div class="col-sm-offset-3 col-sm-6 text-center">
+        
+        <div>
+          <button class="btn btn-pi btn-pi-green" id="do-picture">
+            <i class="fa fa-camera fa-5x"></i>
+          </button>
+          <button class="btn btn-pi btn-pi-green" id="do-video">
+            <i class="fa fa-circle fa-5x" id="video-icon"></i>
+          </button>
+        </div>
+        <div class="preview">
+          <div class="preview-content" id="preview-content">
+          </div>
+        </div>
       </div>
 
-      <div class="clearfix"></div>
-
-      <div class="col-xs-12 col-sm-12" id="item-container">
-        <!-- items will be here -->
+      <div class="col-sm-12">
       </div>
-
-      <div class="clearfix"></div>
-
     </div>
-    
+
     <script src="components/jquery/dist/jquery.min.js"></script>
     <script src="components/bootstrap/dist/js/bootstrap.min.js"></script>
     <script src="components/lightbox2/js/lightbox.js"></script>
     <script src="components/videojs/dist/video-js/video.js"></script>
-    <script src="js/pi-cam.js"></script>
     <script>
+      (function($){
+        $.hitch = function(scope, fn){
+          return function(){
+            return fn.apply(scope, arguments);
+          }
+        }
+      })($);
 
-      
+      $(function() {
 
+        var app = {
+          state: 'free',
+          doTakePicture: function() {
+
+            if ($('#preview-content').is(':not(:empty)')) {
+
+              $('#preview-content').children().fadeOut(250, function() { 
+                  $('#preview-content').empty(); 
+              });
+
+            }
+
+            this.setState('picture');
+
+            $.ajax('take.picture', {
+              dataType: 'json'
+            }).done($.hitch(this, function(data) {
+
+              $('#preview-content').append('<img src="' + data.image + '" />').hide().fadeIn();
+
+              this.setState('free');
+
+            }), $.hitch(this, function(error) {
+              
+              this.setState('free');
+
+            }));
+
+          },
+          doStartVideo: function() {
+
+            var startVideo = $.hitch(this, function() { 
+                
+              $('#preview-content').empty(); 
+              
+              this.setState('video');
+
+              $('#preview-content').append('<video class="video-js vjs-default-skin" width="400" height="300" src="take.video" type="video/mp4" />').hide().fadeIn();
+
+            });
+
+            if ($('#preview-content').children().length !== 0) {
+
+              $('#preview-content').children().fadeOut(250, startVideo);
+
+            } else {
+
+              startVideo();
+
+            }
+
+          },
+          doStopVideo: function() {
+
+            $.ajax('stop.video', {
+              dataType: 'json'
+            }).done($.hitch(this, function(data) {
+
+
+              $('#preview-content').empty();
+
+              $('#preview-content').append('<video controls  class="video-js vjs-default-skin" width="400" height="300" src="' + data.video + '" type="video/mp4" />').hide().fadeIn();
+
+              this.setState('free');
+
+            }), $.hitch(this, function(error) {
+
+              this.setState('free');
+
+            }));
+
+          },
+          setState: function(state) {
+            if (state === this.state) {
+              return;
+            } else if (state === 'picture') {
+              $('#do-picture').prop('disabled', true);
+              $('#do-video').prop('disabled', true);
+            } else if (state === 'video') {
+              $('#do-picture').prop('disabled', true);
+              $('#do-video').removeClass('btn-pi-green');
+              $('#do-video').addClass('btn-pi-red');
+              $('#video-icon').removeClass('fa-circle');
+              $('#video-icon').addClass('fa-stop');
+            } else if (state === 'free') {
+              $('#do-picture').prop('disabled', false);
+              $('#do-video').prop('disabled', false);
+              $('#do-video').removeClass('btn-pi-red');
+              $('#do-video').addClass('btn-pi-green');
+              $('#video-icon').removeClass('fa-stop');
+              $('#video-icon').addClass('fa-circle');
+            }
+            this.state = state;
+          }
+        };
+
+        $('#do-picture').on('click', function() {
+          app.doTakePicture();
+        });
+
+        $('#do-video').on('click', function() {
+          if (app.state === 'free') {
+            app.doStartVideo();
+          } else {
+            app.doStopVideo();
+          }
+        });
+
+      });
     </script>
   </body>
 </html>
