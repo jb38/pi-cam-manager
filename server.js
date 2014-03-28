@@ -130,28 +130,20 @@ var video_file = null;
 
 app.use('/take.video', function(req, res) {
 
-  if (IS_TEST) {
+  var filename =  new Date().getTime() + '.mp4'; 
 
-    res.send(JSON.stringify({ foo: 'bar' }));
+  video_file = path.join(CAMERA_OUTPUT_DIR + filename);
 
-  } else {
+  res.setHeader('Content-Type', 'video/mp4');
 
-    var filename =  new Date().getTime() + '.mp4'; 
-
-    video_file = path.join(CAMERA_OUTPUT_DIR + filename);
-
-    res.setHeader('Content-Type', 'video/mp4');
-
-    video_process = spawn(
-      '/opt/vc/bin/raspivid -o - | /usr/bin/tee ' + video_file,
-      [],
-      { stdio: 'inherit' }
-    );
-    video_process.stdout.on('data', function (data) {
-      res.send(data);
-    });
-
-  }
+  video_process = spawn(
+    '/opt/vc/bin/raspivid -o - | /usr/bin/tee ' + video_file,
+    [],
+    { stdio: 'inherit' }
+  );
+  video_process.stdout.on('data', function (data) {
+    res.send(data);
+  });
 
 });
 
