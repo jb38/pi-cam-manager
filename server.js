@@ -142,17 +142,17 @@ app.use('/take.video', function(req, res) {
     '/opt/vc/bin/raspivid',
     [ '-o', '-' ]
   );
-  video_process.stdout.on('data', function (data) {
-console.log('data');
-    video_file_d.write(data);
-    res.send(new Buffer(data));
+  video_process.stdout.on('data', function (chunk) {
+    console.log('got %d bytes of data', chunk.length)
+    fs.writeSync(video_file_d, chunk);
+    res.send(chunk);
   });
 
 });
 
 app.use('/stop.video', function(req, res) {
 
-  video_file_d.close();
+  fs.closeSync(video_file_d);
   video_process.kill();
   video_process = null;
 
