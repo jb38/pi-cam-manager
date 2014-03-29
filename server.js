@@ -127,6 +127,7 @@ app.use('/take.picture', function(req, res) {
 
 var video_process = null;
 var video_file = null;
+var video_file_d = null;
 
 app.use('/take.video', function(req, res) {
 
@@ -136,13 +137,14 @@ app.use('/take.video', function(req, res) {
 
   res.setHeader('Content-Type', 'video/mp4');
 
+  video_file_d = fs.openSync(video_file, 'w');
   video_process = spawn(
     '/opt/vc/bin/raspivid',
-    [ '-o', '-', '|', '/usr/bin/tee', video_file],
-    { stdio: 'inherit' }
+    [ '-o', '-' ]
   );
   video_process.stdout.on('data', function (data) {
 console.log('data');
+    video_file_d.write(data);
     res.send(new Buffer(data));
   });
 
@@ -150,6 +152,7 @@ console.log('data');
 
 app.use('/stop.video', function(req, res) {
 
+  video_file_d.close();
   video_process.kill();
   video_process = null;
 
